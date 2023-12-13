@@ -21,6 +21,7 @@ def state_increasing():
     cex_processing = ['rs', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd']
     # cex_processing = ['rs']
     data_dict = defaultdict(tuple)
+    data_dict_pickle = defaultdict(list)
 
     for cex in cex_processing:
         states_data_median = []
@@ -47,6 +48,10 @@ def state_increasing():
                                      print_level=0, cex_processing=cex, return_data=True)
                 states_data.append(number_states)
                 query_data.append(data['queries_learning'])
+                data_dict_pickle[cex].append((number_states, x, data['queries_learning']))
+                data_dict_pickle[cex].append((number_states, x, data['steps_learning']))
+                data_dict_pickle[cex].append((number_states, x, data['queries_eq_oracle']))
+                data_dict_pickle[cex].append((number_states, x, data['steps_eq_oracle']))
 
             states_data_median.append(np.median(states_data))
             query_data_median.append(np.median(query_data))
@@ -55,7 +60,7 @@ def state_increasing():
 
     # Save data_dict to a pickle file
     with open('state_increasing.pickle', 'wb') as file:
-        pickle.dump(data_dict, file)
+        pickle.dump(data_dict_pickle, file)
 
     # plot
     plt.figure()
@@ -71,19 +76,22 @@ def state_increasing():
 def alphabet_increasing():
     print("Benchmarking for increasing alphabet size")
     repeats = 10
-    max_alphabet_size = 15
+    max_alphabet_size = 5
 
     cex_processing = ['rs', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd']
     # cex_processing = ['rs']
     data_dict = defaultdict(tuple)
+    data_dict_pickle = defaultdict(list)
 
     for cex in cex_processing:
+        print(cex)
         states_data_median = []
         query_data_median = []
-        for alphabet_size in range(1, max_alphabet_size):
+        for alphabet_size in range(1, max_alphabet_size + 1):
             print(alphabet_size)
             for x in range(repeats):
-                random_svepa = generate_random_sevpa(num_states=100, internal_alphabet_size=alphabet_size,
+                print(f'Rep: {x}')
+                random_svepa = generate_random_sevpa(num_states=75, internal_alphabet_size=alphabet_size,
                                                      call_alphabet_size=alphabet_size,
                                                      return_alphabet_size=alphabet_size,
                                                      acceptance_prob=0.4,
@@ -102,15 +110,24 @@ def alphabet_increasing():
                                      print_level=0, cex_processing=cex, return_data=True)
                 states_data.append(alphabet_size * 3)
                 query_data.append(data['queries_learning'])
+                data_dict_pickle[cex].append((alphabet_size * 3, x, data['queries_learning']))
+                data_dict_pickle[cex].append((alphabet_size * 3, x, data['steps_learning']))
+                data_dict_pickle[cex].append((alphabet_size * 3, x, data['queries_eq_oracle']))
+                data_dict_pickle[cex].append((alphabet_size * 3, x, data['steps_eq_oracle']))
+
+                with open('alphabet_increasing.pickle', 'wb') as file:
+                    pickle.dump(data_dict_pickle, file)
 
             states_data_median.append(np.median(states_data))
             query_data_median.append(np.median(query_data))
 
+        # Save data_dict to a pickle file
+        with open('alphabet_increasing.pickle', 'wb') as file:
+            pickle.dump(data_dict_pickle, file)
+
         data_dict[cex] = (states_data_median, query_data_median)
 
-    # Save data_dict to a pickle file
-    with open('alphabet_increasing.pickle', 'wb') as file:
-        pickle.dump(data_dict, file)
+
 
     # plot
     plt.figure()
@@ -126,31 +143,33 @@ def alphabet_increasing():
 def alphabet_increasing_variable():
     print("Benchmarking for variably increasing alphabet size")
     repeats = 10
-    max_alphabet_size = 15
+    max_alphabet_size = 10
 
     data_dict = defaultdict(tuple)
+    data_dict_pickle = defaultdict(list)
     alphabet_types = ['int', 'call', 'ret']
 
     for alphabet_type in alphabet_types:
+        print(alphabet_type)
         states_data_median = []
         query_data_median = []
-        for alphabet_size in range(1, max_alphabet_size):
+        for alphabet_size in range(1, max_alphabet_size + 1):
             print(alphabet_size)
             for x in range(repeats):
                 if alphabet_type == 'int':
-                    random_svepa = generate_random_sevpa(num_states=100, internal_alphabet_size=alphabet_size,
+                    random_svepa = generate_random_sevpa(num_states=75, internal_alphabet_size=alphabet_size,
                                                          call_alphabet_size=1,
                                                          return_alphabet_size=1,
                                                          acceptance_prob=0.4,
                                                          return_transition_prob=0.5)
                 elif alphabet_type == 'call':
-                    random_svepa = generate_random_sevpa(num_states=100, internal_alphabet_size=alphabet_size,
+                    random_svepa = generate_random_sevpa(num_states=75, internal_alphabet_size=alphabet_size,
                                                          call_alphabet_size=1,
                                                          return_alphabet_size=1,
                                                          acceptance_prob=0.4,
                                                          return_transition_prob=0.5)
                 elif alphabet_type == 'ret':
-                    random_svepa = generate_random_sevpa(num_states=100, internal_alphabet_size=alphabet_size,
+                    random_svepa = generate_random_sevpa(num_states=75, internal_alphabet_size=alphabet_size,
                                                          call_alphabet_size=1,
                                                          return_alphabet_size=1,
                                                          acceptance_prob=0.4,
@@ -169,15 +188,19 @@ def alphabet_increasing_variable():
                                      print_level=0, cex_processing='rs', return_data=True)
                 states_data.append(alphabet_size)
                 query_data.append(data['queries_learning'])
+                data_dict_pickle[alphabet_type].append((alphabet_size, x, data['queries_learning']))
+                data_dict_pickle[alphabet_type].append((alphabet_size, x, data['steps_learning']))
+                data_dict_pickle[alphabet_type].append((alphabet_size, x, data['queries_eq_oracle']))
+                data_dict_pickle[alphabet_type].append((alphabet_size, x, data['steps_eq_oracle']))
 
             states_data_median.append(np.median(states_data))
             query_data_median.append(np.median(query_data))
 
-        data_dict[alphabet_type] = (states_data_median, query_data_median)
+            # Save data_dict to a pickle file
+            with open('alphabet_increasing_variable.pickle', 'wb') as file:
+                pickle.dump(data_dict_pickle, file)
 
-    # Save data_dict to a pickle file
-    with open('alphabet_increasing_variable.pickle', 'wb') as file:
-        pickle.dump(data_dict, file)
+        data_dict[alphabet_type] = (states_data_median, query_data_median)
 
     # plot
     plt.figure()
@@ -191,8 +214,9 @@ def alphabet_increasing_variable():
 
 
 def benchmark_vpa_dfa():
-    max_learning_rounds = 100
+    max_learning_rounds = 200
     data_dict = defaultdict(tuple)
+    data_dict_pickle = defaultdict(list)
     label_data = []
 
     for i, vpa in enumerate(
@@ -228,11 +252,14 @@ def benchmark_vpa_dfa():
         print(data_dfa['queries_learning'])
 
         data_dict[vpa] = (data_vpa['queries_learning'], data_dfa['queries_learning'])
+        data_dict_pickle[vpa].append((data_vpa['queries_learning'], data_dfa['queries_learning']))
+        data_dict_pickle[vpa].append((data_vpa['steps_learning'], data_dfa['steps_learning']))
+        data_dict_pickle[vpa].append((data_vpa['queries_eq_oracle'], data_dfa['queries_eq_oracle']))
+        data_dict_pickle[vpa].append((data_vpa['steps_eq_oracle'], data_dfa['steps_eq_oracle']))
 
-
-    # Save data_dict to a pickle file
-    with open('benchmark_vpa_dfa.pickle', 'wb') as file:
-        pickle.dump(data_dict, file)
+        # Save data_dict to a pickle file
+        with open('benchmark_vpa_dfa.pickle', 'wb') as file:
+            pickle.dump(data_dict_pickle, file)
 
     #plotting
     keys = list(data_dict.keys())
@@ -250,11 +277,11 @@ def benchmark_vpa_dfa():
     plt.title('Bar Graph of Queries for VPA and DFA')
     plt.xticks(index + bar_width / 2, label_data)
     plt.legend()
-    plt.show()
+    plt.savefig('benchmark_vpa_dfa_all_L.png')
 
 
 # choose which benchmark to execute
-state_increasing()
+# state_increasing()
 alphabet_increasing()
 alphabet_increasing_variable()
 benchmark_vpa_dfa()
