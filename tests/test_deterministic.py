@@ -1,16 +1,13 @@
-import random
 import unittest
 
-from aalpy.SULs import DfaSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
 from aalpy.learning_algs import run_Lstar
-from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import createPTA
-from aalpy.oracles import WMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
+from aalpy.oracles import WMethodEqOracle, WpMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
     RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, CacheBasedEqOracle, \
-    KWayStateCoverageEqOracle
-from aalpy.utils import get_Angluin_dfa, load_automaton_from_file, save_automaton_to_file
+    KWayStateCoverageEqOracle, RandomWpMethodEqOracle
+from aalpy.utils import get_Angluin_dfa, load_automaton_from_file
 from aalpy.utils.ModelChecking import bisimilar
-from aalpy.utils.AutomatonGenerators import generate_random_deterministic_automata
 
 correct_automata = {Dfa: get_Angluin_dfa(),
                     MealyMachine: load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
@@ -41,7 +38,7 @@ class DeterministicTest(unittest.TestCase):
 
         for automata in automata_type:
             for closing in closing_strategies:
-                sul = DfaSUL(dfa)
+                sul = AutomatonSUL(dfa)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 1000)
 
                 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata, closing_strategy=closing,
@@ -64,7 +61,7 @@ class DeterministicTest(unittest.TestCase):
 
         for automata in automata_type:
             for s_closed in suffix_closedness:
-                sul = DfaSUL(angluin_example)
+                sul = AutomatonSUL(angluin_example)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
                 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata,
@@ -88,7 +85,7 @@ class DeterministicTest(unittest.TestCase):
 
         for automata in automata_type:
             for cex in cex_processing:
-                sul = DfaSUL(angluin_example)
+                sul = AutomatonSUL(angluin_example)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
                 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata,
@@ -108,25 +105,30 @@ class DeterministicTest(unittest.TestCase):
         automata_type = ['dfa', 'mealy', 'moore']
 
         for automata in automata_type:
-            sul = DfaSUL(angluin_example)
+            sul = AutomatonSUL(angluin_example)
 
             random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul, 5000, reset_after_cex=True)
             state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=10, walk_len=50)
             tran_cov_eq_oracle = TransitionFocusOracle(alphabet, sul, num_random_walks=200, walk_len=30,
                                                        same_state_prob=0.3)
             w_method_eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(angluin_example.states) + 1)
+            wp_method_eq_oracle = WpMethodEqOracle(alphabet, sul, max_number_of_states=len(angluin_example.states) + 1)
+            rwp_method_eq_oracle = RandomWpMethodEqOracle(alphabet, sul)
             random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=10, walk_len=50)
             bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 4)
             random_word_eq_oracle = RandomWordEqOracle(alphabet, sul)
             cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul)
             kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul)
 
-            oracles = [random_walk_eq_oracle, random_word_eq_oracle, random_W_method_eq_oracle, w_method_eq_oracle,
-                       kWayStateCoverageEqOracle, cache_based_eq_oracle, bf_exploration_eq_oracle, tran_cov_eq_oracle,
+            oracles = [random_walk_eq_oracle, random_word_eq_oracle,
+                       random_W_method_eq_oracle, w_method_eq_oracle,
+                       wp_method_eq_oracle, rwp_method_eq_oracle,
+                       kWayStateCoverageEqOracle, cache_based_eq_oracle,
+                       bf_exploration_eq_oracle, tran_cov_eq_oracle,
                        state_origin_eq_oracle]
 
             for oracle in oracles:
-                sul = DfaSUL(angluin_example)
+                sul = AutomatonSUL(angluin_example)
                 oracle.sul = sul
 
                 learned_model = run_Lstar(alphabet, sul, oracle, automaton_type=automata,
@@ -156,7 +158,7 @@ class DeterministicTest(unittest.TestCase):
                 for cex in cex_processing:
                     for suffix in suffix_closedness:
                         for cache in caching:
-                            sul = DfaSUL(angluin_example)
+                            sul = AutomatonSUL(angluin_example)
 
                             random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul, 5000, reset_after_cex=True)
                             state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=10, walk_len=50)
@@ -164,22 +166,25 @@ class DeterministicTest(unittest.TestCase):
                                                                        same_state_prob=0.3)
                             w_method_eq_oracle = WMethodEqOracle(alphabet, sul,
                                                                  max_number_of_states=len(angluin_example.states))
+                            wp_method_eq_oracle = WpMethodEqOracle(alphabet, sul,
+                                                                 max_number_of_states=len(angluin_example.states))
+                            rwp_method_eq_oracle = RandomWpMethodEqOracle(alphabet, sul)
                             random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul,
                                                                               walks_per_state=10, walk_len=50)
                             bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 4)
                             random_word_eq_oracle = RandomWordEqOracle(alphabet, sul)
                             cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul)
-                            kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul)
 
                             oracles = [random_walk_eq_oracle, random_word_eq_oracle, random_W_method_eq_oracle,
-                                       kWayStateCoverageEqOracle, cache_based_eq_oracle, bf_exploration_eq_oracle,
-                                       tran_cov_eq_oracle, w_method_eq_oracle, state_origin_eq_oracle]
+                                       rwp_method_eq_oracle, cache_based_eq_oracle, bf_exploration_eq_oracle, 
+                                       wp_method_eq_oracle, tran_cov_eq_oracle, w_method_eq_oracle,
+                                       state_origin_eq_oracle]
 
                             if not cache:
                                 oracles.remove(cache_based_eq_oracle)
 
                             for oracle in oracles:
-                                sul = DfaSUL(angluin_example)
+                                sul = AutomatonSUL(angluin_example)
                                 oracle.sul = sul
 
                                 learned_model = run_Lstar(alphabet, sul, oracle, automaton_type=automata,

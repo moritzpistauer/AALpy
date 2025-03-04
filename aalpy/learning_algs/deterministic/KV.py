@@ -29,7 +29,8 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
         automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'
 
-        cex_processing: None for no counterexample processing, or 'rs' for Rivest & Schapire counterexample processing
+        cex_processing: Counterexample processing strategy. Either 'rs' (Riverst-Schapire), 'longest_prefix'.
+            (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
@@ -112,7 +113,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
             if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
                 break
 
-            hypothesis = classification_tree.gen_hypothesis()
+            hypothesis = classification_tree.update_hypothesis()
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
@@ -164,7 +165,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
         if print_level == 3 and classification_tree:
             print('Visualization of classification tree saved to classification_tree.pdf')
-            visualize_classification_tree(classification_tree.root, 'classification_tree.pdf')
+            visualize_classification_tree(classification_tree.root)
 
     if return_data:
         return hypothesis, info

@@ -7,7 +7,7 @@ from random import choices
 from typing import Tuple, Union
 
 import aalpy.paths
-from aalpy.SULs import MealySUL, DfaSUL, MooreSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine, MooreState, MealyState, \
     DfaState
 from aalpy.base import DeterministicAutomaton, SUL, AutomatonState
@@ -239,11 +239,18 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
     """
     Checks whether the provided automata are bisimilar.
     If return_cex the function returns a counter example or None, otherwise a Boolean is returned.
+
+    Returns:
+        object:
     """
 
     # TODO allow states as inputs instead of automata
     if a1.__class__ != a2.__class__:
         raise ValueError("tried to check bisimilarity of different automaton types")
+    # if you use this function with the same object (does not make sense anyway)
+    if a1 is a2:
+        a2 = a1.copy()
+
     supported_automaton_types = (Dfa, MooreMachine, MealyMachine)
     if not isinstance(a1, supported_automaton_types):
         raise NotImplementedError(
@@ -299,15 +306,18 @@ def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomato
     """
     #
     from aalpy.oracles import RandomWMethodEqOracle
+    # if you use this function with the same object (does not make sense anyway)
+    if aut_1 is aut_2:
+        aut_2 = aut_1.copy()
 
-    type_map = {MooreMachine: MooreSUL, Dfa: DfaSUL, MealyMachine: MealySUL}
-    assert set(aut_1.get_input_alphabet()) == set(aut_2.get_input_alphabet())
+    if set(aut_1.get_input_alphabet()) != set(aut_2.get_input_alphabet()):
+        assert False, "Cannot compare automata with different input alphabets"
 
     input_al = aut_1.get_input_alphabet()
     # larger automaton is used as hypothesis, as then test-cases will contain prefixes leading to states
     # not in smaller automaton
     base_automaton, test_automaton = (aut_1, aut_2) if aut_1.size < aut_2.size else (aut_2, aut_1)
-    base_sul = type_map[type(base_automaton)](base_automaton)
+    base_sul = AutomatonSUL(base_automaton)
 
     # compute prefixes for all states of the test automaton (needed for advanced eq. oracle)
     for state in test_automaton.states:
@@ -378,10 +388,8 @@ def generate_test_cases(automaton: DeterministicAutomaton, oracle):
     """
     from copy import deepcopy
 
-    type_map = {MooreMachine: MooreSUL, Dfa: DfaSUL, MealyMachine: MealySUL}
-
     automaton_copy = deepcopy(automaton)
-    base_sul = type_map[type(automaton_copy)](automaton_copy)
+    base_sul = AutomatonSUL(automaton_copy)
 
     wrapped_sul = TestCaseWrapperSUL(base_sul)
     oracle.sul = wrapped_sul
