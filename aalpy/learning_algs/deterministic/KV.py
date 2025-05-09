@@ -126,6 +126,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
                 # Perform an equivalence query on this automaton
                 eq_query_start = time.time()
                 cex = eq_oracle.find_cex(hypothesis)
+
                 eq_query_time += time.time() - eq_query_start
 
                 if cex is None:

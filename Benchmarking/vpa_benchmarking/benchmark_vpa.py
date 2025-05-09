@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
-from aalpy.SULs.AutomataSUL import SevpaSUL, DfaSUL
+from aalpy.SULs.AutomataSUL import SevpaSUL, DfaSUL, VpaSUL
 from aalpy.automata import SevpaAlphabet
 from aalpy.learning_algs import run_KV
 from aalpy.oracles import RandomWordEqOracle
@@ -219,9 +219,11 @@ def benchmark_vpa_dfa():
     data_dict_pickle = defaultdict(list)
     label_data = []
 
+    # for i, vpa in enumerate(
+    #         [vpa_L1(), vpa_L2(), vpa_for_L3(), vpa_L3(), vpa_L4(), vpa_L6(),
+    #          vpa_L8(), vpa_L9(), vpa_L10(), vpa_L11(), vpa_L12()]):
     for i, vpa in enumerate(
-            [vpa_L1(), vpa_L2(), vpa_for_L3(), vpa_L3(), vpa_for_L5(), vpa_L4(), vpa_L6(),
-             vpa_L8(), vpa_for_L10(), vpa_for_L11(), vpa_L9(), vpa_L10(), vpa_L11(), vpa_L12()]):
+            [vpa_L1()]):
         print(f'VPA {i + 1 if i < 6 else i + 2}')
         label_data.append(f'VPA {i + 1 if i < 6 else i + 2}')
 
@@ -238,24 +240,30 @@ def benchmark_vpa_dfa():
 
         eq_oracle_vpa = RandomWordEqOracle(alphabet=alphabet_sevpa.get_merged_alphabet(), sul=sul_vpa, num_walks=10000,
                                        min_walk_len=10, max_walk_len=30)
-        eq_oracle_dfa = RandomWordEqOracle(alphabet=alphabet_sevpa.get_merged_alphabet(), sul=sul_vpa, num_walks=10000,
-                                       min_walk_len=10, max_walk_len=30)
+        # eq_oracle_dfa = RandomWordEqOracle(alphabet=alphabet_sevpa.get_merged_alphabet(), sul=sul_vpa, num_walks=10000,
+        #                                min_walk_len=10, max_walk_len=30)
 
         model_vpa, data_vpa = run_KV(alphabet=alphabet_sevpa, sul=sul_vpa, eq_oracle=eq_oracle_vpa, automaton_type='vpa',
                                      print_level=0, cex_processing='rs', return_data=True,
                                      max_learning_rounds=max_learning_rounds)
 
-        model_dfa, data_dfa = run_KV(alphabet=alphabet_dfa, sul=sul_dfa, eq_oracle=eq_oracle_dfa, automaton_type='dfa',
-                                     print_level=0, cex_processing='rs', return_data=True,
-                                     max_learning_rounds=max_learning_rounds)
+        # model_dfa, data_dfa = run_KV(alphabet=alphabet_dfa, sul=sul_dfa, eq_oracle=eq_oracle_dfa, automaton_type='dfa',
+        #                              print_level=0, cex_processing='rs', return_data=True,
+        #                              max_learning_rounds=max_learning_rounds)
 
-        print(data_dfa['queries_learning'])
+        # print(data_dfa['queries_learning'])
 
-        data_dict[vpa] = (data_vpa['queries_learning'], data_dfa['queries_learning'])
-        data_dict_pickle[vpa].append((data_vpa['queries_learning'], data_dfa['queries_learning']))
-        data_dict_pickle[vpa].append((data_vpa['steps_learning'], data_dfa['steps_learning']))
-        data_dict_pickle[vpa].append((data_vpa['queries_eq_oracle'], data_dfa['queries_eq_oracle']))
-        data_dict_pickle[vpa].append((data_vpa['steps_eq_oracle'], data_dfa['steps_eq_oracle']))
+        # data_dict[vpa] = (data_vpa['queries_learning'], data_dfa['queries_learning'])
+        # data_dict_pickle[vpa].append((data_vpa['queries_learning'], data_dfa['queries_learning']))
+        # data_dict_pickle[vpa].append((data_vpa['steps_learning'], data_dfa['steps_learning']))
+        # data_dict_pickle[vpa].append((data_vpa['queries_eq_oracle'], data_dfa['queries_eq_oracle']))
+        # data_dict_pickle[vpa].append((data_vpa['steps_eq_oracle'], data_dfa['steps_eq_oracle']))
+
+        data_dict[vpa] = (data_vpa['queries_learning'])
+        data_dict_pickle[vpa].append((data_vpa['queries_learning']))
+        data_dict_pickle[vpa].append((data_vpa['steps_learning']))
+        data_dict_pickle[vpa].append((data_vpa['queries_eq_oracle']))
+        data_dict_pickle[vpa].append((data_vpa['steps_eq_oracle']))
 
         # Save data_dict to a pickle file
         with open('benchmark_vpa_dfa.pickle', 'wb') as file:
@@ -282,6 +290,6 @@ def benchmark_vpa_dfa():
 
 # choose which benchmark to execute
 # state_increasing()
-alphabet_increasing()
-alphabet_increasing_variable()
+# alphabet_increasing()
+# alphabet_increasing_variable()
 benchmark_vpa_dfa()
