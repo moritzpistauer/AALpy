@@ -79,8 +79,8 @@ class SevpaTransition:
         Returns:
             str: A string representation of the transition.
         """
-        return f'{self.letter} --> {self.target_state.state_id}' + \
-               f' | {self.action}: {self.stack_guard}' if self.stack_guard else ''
+        return f'{self.letter} --> {self.target_state.state_id}' + (
+            f' | {self.action}: {self.stack_guard}' if self.stack_guard else '')
 
 
 class Sevpa(Automaton):
