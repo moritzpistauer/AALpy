@@ -5,9 +5,10 @@ from pathlib import Path
 
 from pydot import Dot, Node, Edge
 
+from aalpy import SevpaAlphabet
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
     MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState, \
-    SevpaTransition, Vpa, VpaState, VpaTransition, NDMooreMachine, NDMooreState
+    SevpaTransition, Vpa, VpaState, VpaTransition, NDMooreMachine, NDMooreState, VpaAlphabet
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
@@ -220,11 +221,16 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
 
 
 sevpa_transition_pattern = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
+sevpa_return_transition_pattern = r'(\w*)\/\((\w*),(\w*)\)'
 vpa_push_pattern = r"(\S+)\s*/\s*push\(\s*(.*?)\s*\)"
 vpa_pop_pattern = r"(\S+)\s*/\s*pop\(\s*(.*?)\s*\)"
 
 
-def _process_label(label, source, destination, automaton_type):
+def _process_label(label, source, destination, automaton_type, **kwargs):
+    if automaton_type == 'sevpa':
+        vpa_alphabet = kwargs.get('vpa_alphabet')
+        assert isinstance(vpa_alphabet, SevpaAlphabet), f"Expected SevpaAlphabet, got {type(vpa_alphabet).__name__}"
+
     if automaton_type == 'dfa' or automaton_type == 'moore':
         source.transitions[int(label) if label.isdigit() else label] = destination
     if automaton_type == 'mealy':
@@ -256,13 +262,23 @@ def _process_label(label, source, destination, automaton_type):
         source.transitions[inp].append((destination, out, float(prob)))
     if automaton_type == 'sevpa':
         match = re.match(sevpa_transition_pattern, label)
+        if not match:
+            match_learnlib = re.match(sevpa_return_transition_pattern, label)
         # cast to integer
         label = int(label) if label.isdigit() else label
         if match:
             ret, stack_guard, top_of_stack = match.groups()
             return_transition = SevpaTransition(destination, ret, 'pop', (stack_guard, top_of_stack))
             source.transitions[label].append(return_transition)
+        elif match_learnlib:
+            return_letter = match_learnlib.group(1)
+            stack_guard_state = match_learnlib.group(2)
+            stack_guard_call_letter = match_learnlib.group(3)
+            return_transition = SevpaTransition(destination, return_letter, 'pop', (stack_guard_state, stack_guard_call_letter))
+            source.transitions[return_letter].append(return_transition)
         else:
+            if label in vpa_alphabet.call_alphabet:
+                return
             internal_transition = SevpaTransition(destination, label, None, None)
             source.transitions[label].append(internal_transition)
         pass
@@ -341,7 +357,7 @@ starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
 transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*)?;?'
 
 
-def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
+def load_automaton_from_file(path, automaton_type, compute_prefixes=False, **kwargs):
     """
     Loads the automaton from the file.
     Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
@@ -369,6 +385,10 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
                        'smm': (StochasticMealyState, StochasticMealyMachine), 'sevpa': (SevpaState, Sevpa),
                        'vpa': (VpaState, Vpa), 'ndmoore': (NDMooreState, NDMooreMachine)}
 
+    if automaton_type == 'sevpa':
+        vpa_alphabet = kwargs.get('vpa_alphabet')
+        assert isinstance(vpa_alphabet, SevpaAlphabet), f"Expected SevpaAlphabet, got {type(vpa_alphabet).__name__}"
+
     nodeType, aut_type = id_node_aut_map[automaton_type]
 
     initial_state = None
@@ -394,6 +414,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
                 # source, destination, label
                 label = re.search(label_pattern, match.group(3)).group(1)
                 transition_data.append((match.group(1).strip(), match.group(2).strip(), label))
+                # if automaton_type == 'sevpa':
+                #     sevpa_transition = _process_sevpa_transition(match, label)
 
     # ensure initial state is defined and it is defined states
     assert initial_state is not None and initial_state in node_label_dict.keys()
@@ -401,7 +423,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
     for source, destination, transition_label in transition_data:
         label = _strip_label(transition_label)
-        _process_label(label, node_label_dict[source], node_label_dict[destination], automaton_type)
+        _process_label(label, node_label_dict[source], node_label_dict[destination], automaton_type, vpa_alphabet=vpa_alphabet)
 
     automaton = aut_type(initial_state, list(node_label_dict.values()))
     if automaton_type not in {'mc', 'sevpa', 'vpa'} and not automaton.is_input_complete():

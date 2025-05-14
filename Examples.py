@@ -1345,4 +1345,5 @@ def k_tails_example():
 
     k_tails_2 = run_k_tails(data, k=8, automaton_type='mealy', print_info=True)
 
-learning_context_free_grammar_example()
+
+arithmetic_expression_sevpa_learning()
