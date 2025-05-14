@@ -1344,3 +1344,5 @@ def k_tails_example():
     k_trails_1 = run_k_tails(data, k=3, automaton_type='moore', print_info=True)
 
     k_tails_2 = run_k_tails(data, k=8, automaton_type='mealy', print_info=True)
+
+learning_context_free_grammar_example()

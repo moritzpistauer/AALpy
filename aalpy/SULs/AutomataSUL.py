@@ -17,4 +17,4 @@ class AutomatonSUL(SUL):
         pass
 
 
-MealySUL = OnfsmSUL = StochasticMealySUL = DfaSUL = MooreSUL = MdpSUL = McSUL = SevpaSUL = AutomatonSUL
+MealySUL = OnfsmSUL = StochasticMealySUL = DfaSUL = MooreSUL = MdpSUL = McSUL = SevpaSUL = VpaSUL = AutomatonSUL

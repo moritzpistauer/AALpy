@@ -389,8 +389,8 @@ def plot_runtime_steps():
     tikzplotlib.save("test.txt")
     #fig.savefig('runtime_comp.pgf', bbox_inches='tight')
 
-plot_runtime_steps()
+# plot_runtime_steps()
 #plot_runtime_steps()
 # plot_together_learnlib_comp()
 #plot_increasing_size_exp()
-#plot_increasing_alphabeth_exp()
+plot_increasing_alphabeth_exp()
